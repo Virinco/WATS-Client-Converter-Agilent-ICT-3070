@@ -41,11 +41,9 @@ namespace Agilent
             return new Dictionary<string, string>() 
             { 
                 { "operationTypeCode", "10" }, 
-                { "stationname", "Active" }, 
-                { "location", "oper" }, 
-                { "purpose", "" }, 
-                { "sequenceFile", "" }, 
-                { "sequenceVersion", "" }
+                { "stationname", "test-machine" }, 
+                { "sequenceFile", "seqName" }, 
+                { "sequenceVersion", "1.0.0" }
             };
         }
         
