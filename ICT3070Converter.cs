@@ -7,7 +7,7 @@ using Virinco.WATS.Interface;
 
 namespace Agilent
 {
-    public class ICT3070Converter : IReportConverter
+    public class ICT3070Converter : IReportConverter_v2
     {
         string par_stationname = string.Empty;
         string par_location = string.Empty;
@@ -24,34 +24,56 @@ namespace Agilent
         System.Globalization.CultureInfo provider = System.Globalization.CultureInfo.InvariantCulture;
 
         protected IDictionary<string, string> converterArguments;
+
+        // IReportConverter_v2 parameters property
+        Dictionary<string, string> parameters = new Dictionary<string, string>();
+        public Dictionary<string, string> ConverterParameters => parameters;
+
+        public ICT3070Converter()
+        {
+            // Default parameters similar to previous GetParameters
+            parameters = new Dictionary<string, string>()
+            {
+                { "operationTypeCode", "10" },
+                { "stationname", "test-machine" },
+                { "sequenceFile", "seqName" },
+                { "sequenceVersion", "1.0.0" },
+            };
+            InitializeFromParameters(parameters);
+        }
+
         public ICT3070Converter(IDictionary<string, string> args)
         {
             //Setup default from Converter.xml arguments
             converterArguments = args;
+            parameters = args != null ? new Dictionary<string, string>(args) : new Dictionary<string, string>();
+            InitializeFromParameters(parameters);
+        }
+
+        private void InitializeFromParameters(IDictionary<string, string> args)
+        {
             par_operationcode = GetStringFromDictionary(args, "operationTypeCode", "10");
             par_stationname = GetStringFromDictionary(args, "stationname", "");
-            par_location = GetStringFromDictionary(args, "location", "");
-            par_purpose = GetStringFromDictionary(args, "purpose", "");
             par_sequencefile = GetStringFromDictionary(args, "sequenceFile", "");
             par_sequenceversion = GetStringFromDictionary(args, "sequenceVersion", "");
         }
-        
+
         public static IDictionary<string, string> GetParameters()
         {
-            return new Dictionary<string, string>() 
-            { 
-                { "operationTypeCode", "10" }, 
-                { "stationname", "test-machine" }, 
-                { "sequenceFile", "seqName" }, 
+            return new Dictionary<string, string>()
+            {
+                { "operationTypeCode", "10" },
+                { "stationname", "test-machine" },
+                { "sequenceFile", "seqName" },
                 { "sequenceVersion", "1.0.0" }
             };
         }
-        
+
         public Report ImportReport(TDM api, System.IO.Stream file)
         {
             api.TestMode = TestModeType.Active;
             int lineCount = 0;
-            UUTStatusType testStatus=UUTStatusType.Error;
+            UUTStatusType testStatus = UUTStatusType.Error;
             try
             {
                 using (StreamReader reader = new StreamReader(file))
@@ -132,12 +154,12 @@ namespace Agilent
 
 
         private void ProcessMiscellaneousData(string[] rowValues)
-        {            
+        {
 
             string name = getValue(1, rowValues);
             string string_value = getValue(2, rowValues);
 
-            if (string.IsNullOrEmpty(string_value)) 
+            if (string.IsNullOrEmpty(string_value))
             {
                 short numeric_value = ParseInt16(getValue(3, rowValues), short.MinValue);
                 if (numeric_value != short.MinValue)
@@ -149,14 +171,15 @@ namespace Agilent
                     string_value = string.Empty;
                 }
 
-            };
-            
+            }
+            ;
+
             string typedef = getValue(4, rowValues);
             MiscUUTInfo mi = uut.AddMiscUUTInfo(name, string_value);
-            
+
 
         }
-        
+
         #region NumericStringBool_StepParsers
 
         int measureCounter = 1;
@@ -324,7 +347,7 @@ namespace Agilent
         }
 
         #endregion
-        
+
 
         private UUTReport processHeader(TDM api, string[] rowValues)
         {
@@ -342,7 +365,8 @@ namespace Agilent
                 case "p": TestStatus = UUTStatusType.Passed; break;
                 case "f": TestStatus = UUTStatusType.Failed; break;
                 default: break;
-            };
+            }
+            ;
 
             string ErrorMessage = rowValues.Length > 5 ? rowValues[5] : "";
 
@@ -410,7 +434,7 @@ namespace Agilent
             return uut;
         }
 
-        
+
         private StepStatusType GetStepStatusType(string value)
         {
             switch (value.ToLower().Trim())
@@ -420,7 +444,8 @@ namespace Agilent
                 case "f":
                 case "fail": return StepStatusType.Failed;
                 default: return StepStatusType.Error;
-            };
+            }
+            ;
         }
 
         private string getValue(int idx, string[] array)
@@ -438,7 +463,7 @@ namespace Agilent
             }
             return CurrentSequenceCall;
         }
-        
+
         protected static string GetStringFromDictionary(IDictionary<string, string> dict, string key, string defaultValue)
         {
             if (dict != null && dict.ContainsKey(key))
